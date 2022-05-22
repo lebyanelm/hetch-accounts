@@ -37,7 +37,7 @@ __________________________________
 """
 server_instance = Flask(__name__,
 			static_folder="./assets/",
-            static_url_path="/server_name/assets/")
+            static_url_path="/accounts/assets/") 
 CORS(server_instance, resources={r"*": {"origins": "*"}})
 
 """
