@@ -5,8 +5,6 @@ from requests import get
 
 class AccountModel:
 	def __init__(self, params):
-		print(params)
-		
 		super().__init__()
 		self.display_name = params.get("display_name")
 		self.email_address = params.get("email_address")

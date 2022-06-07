@@ -33,8 +33,7 @@ COPY requirements.txt   .
 
 ENV PATH=$PATH:/app/.local/bin:/app/python/bin/
 ENV PYTHONPATH=$PYTHONPATH:/app/python
-
-RUN pip install -r requirements.txt --target=/app/python
+RUN curl https://bootstrap.pypa.io/get-pip.py | python && pip install -r requirements.txt --target=/app/python
 
 # COPY ALL THE REST OF THE SOURCE CODE
 COPY .           .

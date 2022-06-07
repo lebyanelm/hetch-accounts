@@ -2,23 +2,23 @@ from flask import request, g
 from functools import wraps
 from traceback import format_exc
 
-from models.response import Response
+from models.response import Response as ResponseModel
 
 """ Decorator for reading the data fron the request sent. """
 def parse_request(fn, *args, **kwargs):
 	def decorator():
 		content_type = request.headers.get("Content-Type")
 		if content_type == None:
-			return Response(cd=400, msg="Request body is empty, application/json is required.").to_json()
+			return ResponseModel(cd=400, msg="Request body is empty, application/json is required.").to_json()
 		elif content_type != "application/json":
-			return Response(cd=400, msg=f"Content-Type {content_type} is not supported. Use application/json.").to_json()
+			return ResponseModel(cd=400, msg=f"Content-Type {content_type} is not supported. Use application/json.").to_json()
 		else:
 			try:
 				request.get_json()
 				return fn(*args, **kwargs)
 			except:
 				print(format_exc())
-				return Response(cd=400, msg="Error loading JSON data. Invalid JSON provided.").to_json()
+				return ResponseModel(cd=400, msg="Error loading JSON data. Invalid JSON provided.").to_json()
 	return decorator
 
 
@@ -33,3 +33,14 @@ def validate_request(d: dict, schema: dict) -> list:
 		else:
 			errors.append({ "error": f"Attribute {schema_key} required in request body.", "type": "Undefined." })
 	return errors
+
+def authenticate_request(ctxt, auth_req, cb):
+	with ctxt():
+		# send a authentication request to the re-authenticate server route within the app
+		authentication_validity = auth_req()
+		if authentication_validity.status == "200 OK":
+			# run the callback function when authentication successful
+			return cb(authentication_validity.json["data"]["p+d"])
+		else:
+			# if failed, return the authentication response
+			return authentication_validity
