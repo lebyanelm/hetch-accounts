@@ -1,6 +1,9 @@
-from flask import request, g
+import jwt
+from flask import request
 from functools import wraps
 from traceback import format_exc
+from os import environ
+from datetime import datetime, timedelta
 
 from models.response import Response as ResponseModel
 
@@ -44,3 +47,19 @@ def authenticate_request(ctxt, auth_req, cb):
 		else:
 			# if failed, return the authentication response
 			return authentication_validity
+
+
+def generate_authentication_token(payload, is_persist=True):
+	time_now = datetime.utcnow()
+	time_expiry = timedelta(days=7 if not is_persist else 365)
+	
+	return jwt.encode(
+		{
+			"email_address": payload,
+			"exp": time_now + time_expiry
+		},
+
+		environ["SEED"],
+		algorithm="HS256"
+	)
+	

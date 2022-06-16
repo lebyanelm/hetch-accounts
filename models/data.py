@@ -1,13 +1,14 @@
 # dependencies
 import nanoid
-import models.time_created as TimeCreated
 import json
 
 
+from models.time_created import TimeCreatedModel
+
 class Data:
     def __init__(self):
-        self.time_created = TimeCreated.TimeCreated().__dict__
-        self.last_modified = TimeCreated.TimeCreated().__dict__
+        self.time_created = TimeCreatedModel().__dict__
+        self.last_modified = TimeCreatedModel().__dict__
 
     def to_json(self) -> str:            
         return json.dumps(obj=self.__dict__)

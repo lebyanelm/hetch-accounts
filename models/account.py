@@ -1,9 +1,10 @@
-from bcrypt import hashpw, gensalt
+from passlib.hash import pbkdf2_sha256
 from libgravatar import Gravatar
 from os import environ
 from requests import get
+from models.data import Data
 
-class AccountModel:
+class AccountModel(Data):
 	def __init__(self, params):
 		super().__init__()
 		self.display_name = params.get("display_name")
@@ -12,8 +13,7 @@ class AccountModel:
 		# Save the password as a hashed version
 		if params.get("_id") is None:
 			self.username = self.email_address.split("@")[0]
-			password = bytes(params.get("password"), "utf-8")
-			self.password = hashpw(password, salt=gensalt()).decode()
+			self.password = pbkdf2_sha256.hash(params.get("password"))
 
 			# Profile avatar
 			self.set_profile_avatar()
@@ -73,7 +73,6 @@ class AccountModel:
 	def sanitize(self) -> dict:
 		""" Sensative information """
 		copy = {**self.to_dict()}
-		copy["_id"] = str(copy["_id"])
 
 		del copy["password"]
 		del copy["verification_codes"]
@@ -91,13 +90,9 @@ class AccountModel:
 	def sanitize_soft(self) -> dict:
 		""" Sensative information """
 		copy = {**self.to_dict()}
-		copy["_id"] = str(copy["_id"])
 
 		del copy["password"]
 		del copy["verification_codes"]
 		del copy["payment_tokens"]
 
 		return copy
-
-	def to_dict(self) -> dict:
-		return self.__dict__
