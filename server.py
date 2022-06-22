@@ -247,7 +247,7 @@ def update_account_records(username: str) -> FlaskResponse:
 		return authenticate_request(server_instance.app_context, re_authenticate_session, update_account)
 	except:
 		print(format_exc())
-		return ResponseModel(cd=500, msg="Something went wrong.").to_json()
+		return ResponseModel(cd=500, msg="Something went wrong. That's all we know.").to_json()
 
 
 """ Deleting account records. """
@@ -256,18 +256,21 @@ def delete_account_records(username: str):
 	try:
 		cred_validity = re_authenticate_session()
 		if cred_validity.status == "200 OK":
-			cursor = accounts.find({ "username": username })
-			if len(cursor) != 0:
-				for account in cursor:
-					delete_result = accounts.delete(account["_key"])
-					if delete_result:
-						return ResponseModel(cd=200, msg="Account deleted.").to_json()
+			auth_email_address = cred_validity.json["data"]["p+d"]["email_address"]
+			auth_account_cursor = accounts.find({ "email_address": auth_email_address })
+			if len(auth_account_cursor):
+				for auth_account in auth_account_cursor:
+					if auth_account["username"] == username:
+						delete_result = accounts.delete(auth_account["_key"])
+						if delete_result:
+							return ResponseModel(cd=200, msg="Account deleted.").to_json()
 					else:
-						return ResponseModel(cd=500, msg="Something went wrong.").to_json()
+						return ResponseModel(cd=401, msg="Not allowed to perfom this action.").to_json()
 			else:
-				return ResponseModel(cd=404, msg="Account not found.").to_json()
+				return ResponseModel(cd=404, msg="Authenticated (Logged In) account not found. Logging out.").to_json()
+			return ResponseModel(cd=500, msg="Something went wrong. That's all we know.").to_json()
 		else:
 			return cred_validity
 	except:
 		print(format_exc())
-		return ResponseModel(cd=500, msg="Something went wrong.").to_json()
+		return ResponseModel(cd=500, msg="Something went wrong. That's all we know.").to_json()
