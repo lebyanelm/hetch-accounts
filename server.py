@@ -5,7 +5,7 @@ Server description goes here
 _________________________________
 """
 import urllib3
-import jwt
+import socket
 
 from flask import Flask, request, Response as FlaskResponse
 from flask_cors import CORS, cross_origin
@@ -18,9 +18,16 @@ from utilities import (
 	validate_request,
 	authenticate_request,
 	generate_authentication_token )
+from jwt import PyJWT
 from arango import ArangoClient
 
-urllib3.disable_warnings() # temporarily disable any warnings
+
+""" Temporarily disable any warnings """
+urllib3.disable_warnings()
+
+""" Refactor PyJWT methods """
+jwt = PyJWT()
+
 
 from models.response import Response as ResponseModel
 from models.time_created import TimeCreatedModel
@@ -52,8 +59,9 @@ DATABASE CONNECTION
 __________________________________
 """
 """ Database connection """
+db_connection_failed = False
 try:
-    # Note that ArangoDB Oasis runs deployments in a cluster configuration.
+	# Note that ArangoDB Oasis runs deployments in a cluster configuration.
     # To achieve the best possible availability, your client application has to handle
     # connection failures by retrying operations if needed.
     arango_client = ArangoClient(hosts=environ["ARANGO_URL"], verify_override=False)
@@ -65,19 +73,18 @@ try:
     # Create the application database if it does not exist.
     if not arango_sys_db.has_database(environ["DATABASE_NAME"]):
         arango_sys_db.create_database(environ["DATABASE_NAME"])
+        arango_sys_db.update_permission(username='root', permission='rw', database=environ["DATABASE_NAME"])
+        database = arango_client.db(
+            environ["DATABASE_NAME"], username="root", password=environ["ARANGO_PASSWORD"])
     else:
         database = arango_client.db(
-            environ["DATABASE_NAME"],
-            username="root",
-            password=environ["ARANGO_PASSWORD"])
+            environ["DATABASE_NAME"], username="root", password=environ["ARANGO_PASSWORD"])
     
     # """ Create the required collection """
     if not database.has_collection("accounts"):
         accounts = database.create_collection("accounts")
     else:
         accounts = database.collection("accounts")
-	
-    db_connection_failed = False
 except:
     print("SOMETHING WENT WRONG WITH DB CONNECTION:", format_exc())
     db_connection_failed = True
@@ -94,7 +101,8 @@ __________________________________
 def status() -> FlaskResponse:
 	status = not db_connection_failed
 	return ResponseModel(cd=200 if status == True else 500,
-					msg="Running." if status == True else "Something's not right.").to_json()
+					msg="Running." if status == True else "Something's not right.",
+					d={**environ}).to_json()
 
 
 """ Creating a new hetch account. """

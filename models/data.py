@@ -2,7 +2,6 @@
 import nanoid
 import json
 
-
 from models.time_created import TimeCreatedModel
 
 class Data:

@@ -1,4 +1,4 @@
-import jwt
+from jwt import PyJWT
 from flask import request
 from functools import wraps
 from traceback import format_exc
@@ -6,6 +6,9 @@ from os import environ
 from datetime import datetime, timedelta
 
 from models.response import Response as ResponseModel
+
+""" Refactor PyJWT methods """
+jwt = PyJWT()
 
 """ Decorator for reading the data fron the request sent. """
 def parse_request(fn, *args, **kwargs):
